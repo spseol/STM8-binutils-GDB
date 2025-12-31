@@ -67,6 +67,9 @@ enum stm8_producer
 
 static const char *stm8_register_names[] = { "pc", "a", "x", "y", "sp", "cc" };
 
+/* Builtin target descriptor for STM8 */
+struct target_desc *tdesc_stm8;
+
 unsigned int stm8_debug = 0;
 #define stm8_debug_printf(fmt, ...)                                           \
   debug_prefixed_printf_cond (stm8_debug, "stm8", fmt, ##__VA_ARGS__)
@@ -867,6 +870,27 @@ static const struct frame_unwind stm8_frame_unwind
         NULL,
         default_frame_sniffer };
 
+/* Initialize builtin STM8 target descriptor.
+   This provides a fallback when remote target doesn't supply registers. */
+static void
+initialize_tdesc_stm8 (void)
+{
+  target_desc_up result = allocate_target_description ();
+  set_tdesc_architecture (result.get (), bfd_scan_arch ("stm8"));
+
+  struct tdesc_feature *feature
+      = tdesc_create_feature (result.get (), "org.gnu.gdb.stm8.core");
+
+  tdesc_create_reg (feature, "pc", 0, 1, "general", 32, "uint32");
+  tdesc_create_reg (feature, "a", 1, 1, "general", 8, "uint8");
+  tdesc_create_reg (feature, "x", 2, 1, "general", 16, "uint16");
+  tdesc_create_reg (feature, "y", 3, 1, "general", 16, "uint16");
+  tdesc_create_reg (feature, "sp", 4, 1, "general", 16, "uint16");
+  tdesc_create_reg (feature, "cc", 5, 1, "general", 8, "uint8");
+
+  tdesc_stm8 = result.release ();
+}
+
 /* Initialize the gdbarch structure for the STM8.  */
 static struct gdbarch *
 stm8_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
@@ -874,6 +898,10 @@ stm8_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdesc_arch_data_up tdesc_data;
   const struct target_desc *tdesc = info.target_desc
       = 0; // override target desc if any
+
+  /* Use builtin descriptor as fallback */
+  if (tdesc == NULL)
+    tdesc = tdesc_stm8;
 
   /* Check any target description for validity.  */
   if (tdesc_has_registers (tdesc))
@@ -993,6 +1021,9 @@ _initialize_stm8_tdep ()
 {
   stm8_debug = 0;
   gdbarch_register (bfd_arch_stm8, stm8_gdbarch_init);
+
+  /* Initialize builtin target descriptor */
+  initialize_tdesc_stm8 ();
 
   add_setshow_zuinteger_cmd ("stm8", class_maintenance, &stm8_debug, _ ("\
 Set stm8 debugging."),
