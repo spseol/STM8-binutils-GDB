@@ -57,6 +57,10 @@
 #include "cli/cli-style.h"
 #include "dwarf2/loc.h"
 
+/* STM8 auto-connect configuration */
+extern bool remote_run_connect;
+extern bool remote_run_load;
+
 /* Local functions: */
 
 static void until_next_command (int);
@@ -403,7 +407,39 @@ run_command_1 (const char *args, int from_tty, enum run_how run_how)
   /* Do validation and preparation before possibly changing anything
      in the inferior.  */
 
-  run_target = find_run_target ();
+  /* STM8 auto-connect: try to find run target, if it fails and
+     remote_run_connect is enabled, auto-connect to localhost:3333 */
+  try
+    {
+      run_target = find_run_target ();
+    }
+  catch (const gdb_exception_error &ex)
+    {
+      /* If no run target found and remote_run_connect is enabled, auto-connect */
+      if (remote_run_connect)
+	{
+	  execute_command ("target extended-remote localhost:3333", from_tty);
+	  run_target = find_run_target ();
+
+	  /* STM8 auto-load: if remote_run_load is enabled, load the program */
+	  if (remote_run_load)
+	    {
+	      const char *exec_file_temp = get_exec_file (0);
+	      if (exec_file_temp != nullptr)
+		{
+		  execute_command ("load", from_tty);
+		  /* After loading, start the program running in background */
+		  execute_command ("continue &", from_tty);
+		}
+	    }
+
+	  /* Don't continue with normal run behavior - just stop here
+	     like the old GDB 8.1 did */
+	  return;
+	}
+      else
+	throw;  /* Re-throw the exception if auto-connect is disabled */
+    }
 
   prepare_execution_command (run_target, async_exec);
 

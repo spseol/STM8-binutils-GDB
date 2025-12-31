@@ -91,6 +91,10 @@ Specify the serial device it is connected to\n\
 
 bool remote_debug = false;
 
+/* STM8 auto-connect configuration */
+bool remote_run_connect = true;  /* Default: auto-connect enabled */
+bool remote_run_load = true;      /* Default: auto-load enabled */
+
 #define OPAQUETHREADBYTES 8
 
 /* a 64 bit opaque identifier */
@@ -15700,6 +15704,22 @@ Valid value is \"Ctrl-C\", \"BREAK\" or \"BREAK-g\". The default is \"Ctrl-C\"."
 Set whether interrupt-sequence is sent to remote target when gdb connects to."), _("\
 Show whether interrupt-sequence is sent to remote target when gdb connects to."), _("\
 If set, interrupt sequence is sent to remote target."),
+			   NULL, NULL,
+			   &remote_set_cmdlist, &remote_show_cmdlist);
+
+  add_setshow_boolean_cmd ("run-connect", class_support,
+			   &remote_run_connect, _("\
+Set whether to automatically connect to localhost:3333 when running."), _("\
+Show whether to automatically connect when running."), _("\
+If set, remote target is connected automatically when program is run."),
+			   NULL, NULL,
+			   &remote_set_cmdlist, &remote_show_cmdlist);
+
+  add_setshow_boolean_cmd ("run-load", class_support,
+			   &remote_run_load, _("\
+Set whether to automatically load program when running."), _("\
+Show whether to automatically load when running."), _("\
+If set, program is loaded automatically when run after auto-connect."),
 			   NULL, NULL,
 			   &remote_set_cmdlist, &remote_show_cmdlist);
 
