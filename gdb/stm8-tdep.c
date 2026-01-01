@@ -891,36 +891,60 @@ initialize_tdesc_stm8 (void)
   tdesc_stm8 = result.release ();
 }
 
+/* Validate STM8 target descriptor and allocate tdesc_data if valid.
+   Returns true if descriptor is valid for STM8. */
+static bool
+validate_stm8_descriptor (const struct target_desc *tdesc,
+                          tdesc_arch_data_up &tdesc_data)
+{
+  if (!tdesc_has_registers (tdesc))
+    return false;
+
+  const struct tdesc_feature *feature;
+  feature = tdesc_find_feature (tdesc, "org.gnu.gdb.stm8.core");
+  if (feature == NULL)
+    return false;
+
+  tdesc_data = tdesc_data_alloc ();
+
+  int valid_p = 1;
+  for (int i = 0; i < STM8_NUM_REGS; i++)
+    valid_p &= tdesc_numbered_register (feature, tdesc_data.get (), i,
+                                        stm8_register_names[i]);
+
+  if (!valid_p)
+    {
+      tdesc_data.reset ();
+      return false;
+    }
+
+  return true;
+}
+
 /* Initialize the gdbarch structure for the STM8.  */
 static struct gdbarch *
 stm8_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   tdesc_arch_data_up tdesc_data;
-  const struct target_desc *tdesc = info.target_desc
-      = 0; // override target desc if any
+  const struct target_desc *tdesc = info.target_desc;
+
+  /* Try target-supplied descriptor first, fall back to builtin if invalid */
+  if (tdesc != NULL && !validate_stm8_descriptor (tdesc, tdesc_data))
+    {
+      warning (_ ("Target-supplied descriptor is invalid for STM8, "
+                  "using builtin descriptor"));
+      tdesc = NULL;
+    }
 
   /* Use builtin descriptor as fallback */
   if (tdesc == NULL)
-    tdesc = tdesc_stm8;
-
-  /* Check any target description for validity.  */
-  if (tdesc_has_registers (tdesc))
     {
-      const struct tdesc_feature *feature;
-      int valid_p;
-
-      feature = tdesc_find_feature (tdesc, "org.gnu.gdb.stm8.core");
-      if (feature == NULL)
-        return NULL;
-
-      tdesc_data = tdesc_data_alloc ();
-
-      valid_p = 1;
-      for (int i = 0; i < STM8_NUM_REGS; i++)
-        valid_p &= tdesc_numbered_register (feature, tdesc_data.get (), i,
-                                            stm8_register_names[i]);
-      if (!valid_p)
-        return NULL;
+      tdesc = tdesc_stm8;
+      if (!validate_stm8_descriptor (tdesc, tdesc_data))
+        {
+          /* Builtin descriptor is broken - this should never happen */
+          internal_error (_("Builtin STM8 descriptor is invalid"));
+        }
     }
 
   /* If there is already a candidate, use it.  */
