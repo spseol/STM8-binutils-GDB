@@ -925,6 +925,25 @@ validate_stm8_descriptor (const struct target_desc *tdesc,
   return true;
 }
 
+/* SDCC does not set SHF_EXECINSTR on code sections (HOME, CODE, etc.),
+   so GDB classifies function symbols as data symbols based on section
+   flags alone.  This causes find_pc_sect_compunit_symtab to bail out
+   early (it skips data addresses), breaking source line resolution for
+   function-name breakpoints.  Fix this by checking BSF_FUNCTION which
+   BFD sets from the ELF STT_FUNC symbol type.  */
+
+static void
+stm8_elf_make_msymbol_special (asymbol *sym, struct minimal_symbol *msym)
+{
+  if (sym->flags & BSF_FUNCTION)
+    {
+      if (msym->type () == mst_data || msym->type () == mst_bss)
+	msym->set_type (mst_text);
+      else if (msym->type () == mst_file_data || msym->type () == mst_file_bss)
+	msym->set_type (mst_file_text);
+    }
+}
+
 /* Initialize the gdbarch structure for the STM8.  */
 static struct gdbarch *
 stm8_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
@@ -1025,6 +1044,9 @@ stm8_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_unwind_pc (gdbarch, stm8_unwind_pc);
   set_gdbarch_unwind_sp (gdbarch, stm8_unwind_sp);
+
+  set_gdbarch_elf_make_msymbol_special (gdbarch,
+					stm8_elf_make_msymbol_special);
 
   dwarf2_append_unwinders (gdbarch);
   frame_unwind_append_unwinder (gdbarch, &stm8_frame_unwind);
