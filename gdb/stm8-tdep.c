@@ -125,7 +125,11 @@ stm8_register_to_value (frame_info_ptr frame, int regnum, struct type *type,
 
   memset (to, 0, type->length ());
 
-  if (!get_frame_register_bytes (frame, regnum, 0,
+  /* get_frame_register_bytes expects "next_frame" (the frame inner to the
+     one whose registers we want), not "this_frame".  This API changed
+     between GDB 8.1 and later versions.  */
+  frame_info_ptr next_frame = get_next_frame_sentinel_okay (frame);
+  if (!get_frame_register_bytes (next_frame, regnum, 0,
                                  { to + type->length () - 2, 2 }, optimizedp,
                                  unavailablep))
     return 0;
@@ -395,7 +399,7 @@ stm8_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg)
   else
     t = dwarf2_to_reg_map_gcc;
 
-  for (int i = 0; (t[i] > 0) && (i < 32); i++)
+  for (int i = 0; (t[i] >= 0) && (i < 32); i++)
     {
       if (i == reg)
         {
@@ -405,7 +409,7 @@ stm8_dwarf2_reg_to_regnum (struct gdbarch *gdbarch, int reg)
     }
 
   stm8_debug_printf ("stm8_dwarf2_reg_to_regnum called reg=%d ret=%d\n", reg,
-                     t[reg]);
+                     ret);
 
   return ret;
 }
@@ -742,8 +746,8 @@ stm8_frame_cache (frame_info_ptr next_frame, void **this_cache)
           (unsigned long)cache->saved_regs[STM8_PC_REGNUM].addr (),
           (unsigned long)frame_pc);
       stm8_debug_printf (
-          "stm8_frame_cache: sp=%8.8lx *sp=%8.8lx\n",
-          (unsigned long)cache->saved_regs[STM8_SP_REGNUM].addr (),
+          "stm8_frame_cache: sp(value)=%8.8lx *sp=%8.8lx\n",
+          (unsigned long)cache->saved_regs[STM8_SP_REGNUM].value (),
           (unsigned long)frame_sp);
     }
 
