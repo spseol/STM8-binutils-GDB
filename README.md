@@ -20,13 +20,31 @@ This repository includes additional improvements and updates to work with modern
 - **Built-in target descriptor** with robust fallback mechanism
 - **Colorized disassembly** output for better readability
 
+## Installation
+
+### Debian-like distributions (APT repository)
+
+A prebuilt package for Debian-like distributions (amd64) is available from
+the APT repository at <https://mamut.spseol.cz/debian/>:
+
+```bash
+sudo curl -fsSL https://mamut.spseol.cz/debian/mamut-archive-keyring.gpg -o /etc/apt/keyrings/mamut-archive-keyring.gpg
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/mamut-archive-keyring.gpg] https://mamut.spseol.cz/debian mamut main" | sudo tee /etc/apt/sources.list.d/mamut.list
+sudo apt update
+sudo apt install stm8-binutils-gdb
+```
+
+### From source
+
+See [Building](#building) below.
+
 ## Building
 
 ### Configure
 
 ```bash
 ./configure \
-  --prefix=/usr/local/stow/stm8-binutils-gdb \
+  --prefix=/usr/local/ \
   --target=stm8-none-elf32 \
   --program-prefix=stm8-
 ```
