@@ -71,11 +71,17 @@ stm8-gdb --version
 stm8-as --version
 ```
 
-**Known problem of release `v15.0.50-stm8.1`:** its `stm8-ld` was built before the relocation
-fix (issue #1) and writes wrong addresses (for example `jp _start` is linked as `jp 0x00aa`).
-`stm8-gdb`, `stm8-as` and `stm8-objdump` are fine. If you link with SDCC (`sdld`), as the
-[STM8S toolchain](https://gitlab.com/spseol/mit-no/STM8S-toolchain) does, `stm8-ld` is not used at all.
-A newer release with the fixed `stm8-ld` replaces this one when it is built on a Mac.
+**Known problems of release `v15.0.50-stm8.1`:**
+
+- Its `stm8-ld` was built before the relocation fix (issue #1) and writes wrong addresses
+  (for example `jp _start` is linked as `jp 0x00aa`). If you link with SDCC (`sdld`), as the
+  [STM8S toolchain](https://gitlab.com/spseol/mit-no/STM8S-toolchain) does, `stm8-ld` is not used at all.
+- Its `stm8-gdb` was built **without Python**. The `make debug` of the STM8S toolchain and its
+  VS Code / VSCodium extension need GDB with Python, so for them you have to build from source
+  with Python (see [Building](#building)). Check with
+  `stm8-gdb -batch -ex 'python print(1)'`: it must print `1`.
+
+A newer release replaces this one when it is built on a Mac.
 
 Compare the SHA256 sum of the download with the one in the release notes
 (`shasum -a 256 <file>`). The binaries were built by a community member on a Mac,
@@ -90,16 +96,18 @@ See [Building](#building) below.
 ### Requirements
 
 You need a C and C++ compiler, GNU Make, bison, flex, and the libraries GMP and MPFR
-(GDB needs them). Texinfo is optional: without it the documentation is not built.
+(GDB needs them). GDB with Python scripting is needed by the STM8S toolchain (`make debug`,
+VS Code extension), so install the Python 3 development files too. Texinfo is optional:
+without it the documentation is not built.
 
 - **Debian, Ubuntu:**
   ```bash
-  sudo apt install build-essential bison flex texinfo libgmp-dev libmpfr-dev
+  sudo apt install build-essential bison flex texinfo libgmp-dev libmpfr-dev python3-dev
   ```
 - **macOS:** Install the Command Line Tools and [Homebrew](https://brew.sh), then the libraries:
   ```bash
   xcode-select --install
-  brew install gmp mpfr texinfo
+  brew install gmp mpfr texinfo python
   ```
   The Command Line Tools have no GMP, MPFR or Texinfo, and their GNU Make and bison are
   old; the build works with them as is.
@@ -125,6 +133,7 @@ macOS:
   --with-system-zlib \
   --with-gmp=$(brew --prefix gmp) \
   --with-mpfr=$(brew --prefix mpfr) \
+  --with-python=$(brew --prefix python)/bin/python3 \
   --disable-nls --disable-werror \
   --disable-sim --disable-gprofng --disable-gdbserver
 ```
@@ -160,6 +169,9 @@ then skips the documentation (without it `make` stops with `doc/bfd.info: Error 
   need and that only make the build longer or harder.
 - `--disable-nls`, `--disable-werror`: No translations, and warnings of a newer compiler do
   not stop the build.
+- `--with-python`: Build GDB with Python scripting. `./configure` turns it on by itself when it
+  finds `python3-config`; on macOS with Homebrew use `--with-python=$(brew --prefix python)/bin/python3`
+  (this macOS variant is not tested yet). Check the result with `stm8-gdb -batch -ex 'python print(1)'`.
 - `--disable-gdb`: Build only the binutils (`stm8-as`, `stm8-ld`, ...), then GMP and MPFR are
   not needed.
 
