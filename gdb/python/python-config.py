@@ -78,5 +78,12 @@ for opt in opt_flags:
                 elif os.name == "nt":
                     libs.insert(0, "-L" + os.path.normpath(sys.prefix) + "/libs")
             if getvar("LINKFORSHARED") is not None:
-                libs.extend(getvar("LINKFORSHARED").split())
+                for flag in getvar("LINKFORSHARED").split():
+                    # Framework builds of Python (macOS: python.org, Homebrew) give
+                    # the framework as a path relative to PYTHONFRAMEWORKPREFIX.
+                    fwdir = getvar("PYTHONFRAMEWORKDIR")
+                    fwprefix = getvar("PYTHONFRAMEWORKPREFIX")
+                    if fwdir and fwprefix and flag.startswith(fwdir + "/"):
+                        flag = fwprefix + "/" + flag
+                    libs.append(flag)
         print(to_unix_path(" ".join(libs)))
