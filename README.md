@@ -71,6 +71,12 @@ stm8-gdb --version
 stm8-as --version
 ```
 
+**Known problem of release `v15.0.50-stm8.1`:** its `stm8-ld` was built before the relocation
+fix (issue #1) and writes wrong addresses (for example `jp _start` is linked as `jp 0x00aa`).
+`stm8-gdb`, `stm8-as` and `stm8-objdump` are fine. If you link with SDCC (`sdld`), as the
+[STM8S toolchain](https://gitlab.com/spseol/mit-no/STM8S-toolchain) does, `stm8-ld` is not used at all.
+A newer release with the fixed `stm8-ld` replaces this one when it is built on a Mac.
+
 Compare the SHA256 sum of the download with the one in the release notes
 (`shasum -a 256 <file>`). The binaries were built by a community member on a Mac,
 not by the maintainers; if you prefer, build from source.
