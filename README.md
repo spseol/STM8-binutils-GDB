@@ -104,13 +104,14 @@ without it the documentation is not built.
   ```bash
   sudo apt install build-essential bison flex texinfo libgmp-dev libmpfr-dev python3-dev
   ```
-- **macOS:** Install the Command Line Tools and [Homebrew](https://brew.sh), then the libraries:
+- **macOS:** Install the Command Line Tools (`xcode-select --install`). They have no GMP,
+  MPFR or Texinfo, and their GNU Make and bison are old; the build works with them as is.
+  The simplest way is `contrib/build-macos.sh` (see [macOS package](#macos-package) below): it
+  builds GMP and MPFR itself and needs only [Python from python.org](https://www.python.org/downloads/macos/).
+  To build by hand, install the libraries with [Homebrew](https://brew.sh):
   ```bash
-  xcode-select --install
   brew install gmp mpfr texinfo python
   ```
-  The Command Line Tools have no GMP, MPFR or Texinfo, and their GNU Make and bison are
-  old; the build works with them as is.
 
 ### Configure
 
@@ -170,10 +171,33 @@ then skips the documentation (without it `make` stops with `doc/bfd.info: Error 
 - `--disable-nls`, `--disable-werror`: No translations, and warnings of a newer compiler do
   not stop the build.
 - `--with-python`: Build GDB with Python scripting. `./configure` turns it on by itself when it
-  finds `python3-config`; on macOS with Homebrew use `--with-python=$(brew --prefix python)/bin/python3`
-  (this macOS variant is not tested yet). Check the result with `stm8-gdb -batch -ex 'python print(1)'`.
+  finds `python3-config`; on macOS the Command Line Tools have none, so the option is needed:
+  `--with-python=/Library/Frameworks/Python.framework/Versions/3.14/bin/python3` (Python from
+  python.org, tested) or `--with-python=$(brew --prefix python)/bin/python3` (Homebrew, not
+  tested; it is a framework build of Python like the one from python.org). Check the result with
+  `stm8-gdb -batch -ex 'python print(1)'`; it must print `1`. Python of the Command Line Tools
+  (`Python3.framework` 3.9) works too, but its `sysconfig` points to files that do not exist, so
+  `--with-python=$PWD/contrib/macos-clt-python-config.sh` is needed (it prints the right
+  `--includes`, `--ldflags` and `--exec-prefix`; GDB's `configure` accepts such a script).
+  `stm8-gdb` then needs the Command Line Tools at run time.
 - `--disable-gdb`: Build only the binutils (`stm8-as`, `stm8-ld`, ...), then GMP and MPFR are
   not needed.
+
+### macOS package
+
+`contrib/build-macos.sh` builds everything from a clean state and makes the `.pkg` and
+`.tar.gz` of the prebuilt package (Apple Silicon, macOS 12 or newer):
+
+```bash
+contrib/build-macos.sh ~/stm8-build-out     # results in ~/stm8-build-out/out/
+```
+
+It needs the Command Line Tools and Python 3.14 from python.org installed in
+`/Library/Frameworks/Python.framework`. It downloads GMP and MPFR from ftp.gnu.org (checks the
+SHA-256 sums) and links them statically, configures with the options above, installs into a
+staging directory, and copies the Python runtime into `/usr/local/lib/stm8-python`, so
+`stm8-gdb` works with Python without Homebrew or any installed Python. All binaries are signed ad hoc
+(`codesign -s -`); the package is not signed or notarized.
 
 ## Usage
 
