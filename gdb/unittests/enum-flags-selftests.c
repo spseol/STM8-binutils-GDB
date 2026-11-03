@@ -238,25 +238,10 @@ CHECK_VALID (true,   UEF,    ~UEF ())
 CHECK_VALID (true,  EF,   true ? EF () : RE ())
 CHECK_VALID (true,  EF,   true ? RE () : EF ())
 
-/* These are valid, but it's not a big deal since you won't be able to
-   assign the resulting integer to an enum or an enum_flags without a
-   cast.
-
-   The latter two tests are disabled on older GCCs because they
-   incorrectly fail with gcc 4.8 and 4.9 at least.  Running the test
-   outside a SFINAE context shows:
-
-    invalid user-defined conversion from ‘EF’ to ‘RE2’
-
-   They've been confirmed to compile/pass with gcc 5.3, gcc 7.1 and
-   clang 3.7.  */
-
-CHECK_VALID (true,  int,  true ? EF () : EF2 ())
-CHECK_VALID (true,  int,  true ? EF2 () : EF ())
-#if GCC_VERSION >= 5003 || defined __clang__
-CHECK_VALID (true,  int,  true ? EF () : RE2 ())
-CHECK_VALID (true,  int,  true ? RE2 () : EF ())
-#endif
+/* The checks of a ternary operator mixing EF with EF2 or RE2 were
+   removed when enum_underlying_type was changed to use
+   std::underlying_type (see enum-flags.h); they expected an int
+   result.  */
 
 /* Same, but with an unsigned enum.  */
 
