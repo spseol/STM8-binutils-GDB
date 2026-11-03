@@ -1215,7 +1215,7 @@ md_assemble (char *str)
 
   int count = read_args (str, exps);
   struct stm8_opcodes_s *opcode
-      = (struct stm8_opcodes_s *)htab_find (stm8_hash, op);
+      = (struct stm8_opcodes_s *)str_hash_find (stm8_hash, op);
 
   if (opcode == NULL)
     {
