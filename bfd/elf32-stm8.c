@@ -36,7 +36,7 @@ bfd_elf_stm8_spec_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc_entry,
 static reloc_howto_type elf32_stm8_howto_table_1[] = {
   HOWTO (R_STM8_NONE,            /* type */
          0,                      /* rightshift */
-         3,                      /* size (0 = byte, 1 = short, 2 = long) */
+         0,                      /* size (in bytes) */
          0,                      /* bitsize */
          false,                  /* pc_relative */
          0,                      /* bitpos */
@@ -51,7 +51,7 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
   /* 8 bit offset.  */
   HOWTO (R_STM8_8,                   /* type */
          0,                          /* rightshift */
-         0,                          /* size (0 = byte, 1 = short, 2 = long) */
+         1,                          /* size (in bytes) */
          8,                          /* bitsize */
          false,                      /* pc_relative */
          0,                          /* bitpos */
@@ -66,7 +66,7 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
   /* A 16 bit absolute relocation.  */
   HOWTO (R_STM8_16,                  /* type */
          0,                          /* rightshift */
-         1,                          /* size (0 = byte, 1 = short, 2 = long) */
+         2,                          /* size (in bytes) */
          16,                         /* bitsize */
          false,                      /* pc_relative */
          0,                          /* bitpos */
@@ -78,15 +78,12 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
          0xffff,                     /* dst_mask */
          false),                     /* pcrel_offset */
 
-  // use this with unpatched bfd_get_reloc_size
   HOWTO (R_STM8_24,      /* type */
          0,              /* rightshift */
-         2,              /* size (0 = byte, 1 = short, 2 = long) */
+         3,              /* size (in bytes) */
          24,             /* bitsize */
          false,          /* pc_relative */
-         0, /* bitpos */ // the relocation use bfd_get_32 so our relocation end
-                         // up in the upper 24 bits and so relocation value has
-                         // to be shifted 8 bits to the left
+         0,              /* bitpos */
          complain_overflow_unsigned, /* complain_on_overflow */
          // bfd_elf_stm8_spec_reloc,     /* special_function */
          bfd_elf_generic_reloc, /* special_function */
@@ -98,7 +95,7 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
 
   HOWTO (R_STM8_32,                  /* type */
          0,                          /* rightshift */
-         2,                          /* size (0 = byte, 1 = short, 2 = long) */
+         4,                          /* size (in bytes) */
          32,                         /* bitsize */
          false,                      /* pc_relative */
          0,                          /* bitpos */
@@ -113,7 +110,7 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
   /* A 8 bit PC relative relocation.  */
   HOWTO (R_STM8_8_PCREL,           /* type */
          0,                        /* rightshift */
-         0,                        /* size (0 = byte, 1 = short, 2 = long) */
+         1,                        /* size (in bytes) */
          8,                        /* bitsize */
          true,                     /* pc_relative */
          0,                        /* bitpos */
@@ -128,7 +125,7 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
   /* lo 8 bit relocation.  */
   HOWTO (R_STM8_LO8,             /* type */
          0,                      /* rightshift */
-         0,                      /* size (0 = byte, 1 = short, 2 = long) */
+         1,                      /* size (in bytes) */
          8,                      /* bitsize */
          false,                  /* pc_relative */
          0,                      /* bitpos */
@@ -143,7 +140,7 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
   /* hi 8 bit relocation.  */
   HOWTO (R_STM8_HI8,             /* type */
          8,                      /* rightshift */
-         0,                      /* size (0 = byte, 1 = short, 2 = long) */
+         1,                      /* size (in bytes) */
          8,                      /* bitsize */
          false,                  /* pc_relative */
          0,                      /* bitpos */
@@ -158,7 +155,7 @@ static reloc_howto_type elf32_stm8_howto_table_1[] = {
   /* hh 8 bit relocation.  */
   HOWTO (R_STM8_HH8,             /* type */
          16,                     /* rightshift */
-         0,                      /* size (0 = byte, 1 = short, 2 = long) */
+         1,                      /* size (in bytes) */
          8,                      /* bitsize */
          false,                  /* pc_relative */
          0,                      /* bitpos */

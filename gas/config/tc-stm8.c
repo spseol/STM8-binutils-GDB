@@ -307,7 +307,6 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
         {
           fixP->fx_no_overflow = 1;
           fixP->fx_done = 0;
-          fixP->fx_where--;
         }
       else
         {
