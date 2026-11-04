@@ -88,6 +88,37 @@ Compare the SHA256 sum of the download with the one in the release notes
 `contrib/build-macos.sh` (see [macOS package](#macos-package)), not by the maintainers; if you
 prefer, build from source.
 
+### Windows (x64)
+
+A prebuilt package for Windows 10 or newer (64-bit) is attached to the
+[releases](https://gitlab.com/spseol/mit-no/stm8-binutils-gdb/-/releases). It contains `stm8-gdb`
+with Python and DAP support, `stm8-as`, `stm8-ld`, `stm8-objdump` and the other binutils, the DLLs
+they need and its own copy of Python 3.14, so you do **not** need MSYS2, Python or anything else
+installed. The release has two files with the same content. Pick one:
+
+| File | What it is | Choose it if |
+|------|------------|--------------|
+| `stm8-binutils-gdb-windows-x64-setup.exe` | Installer. Installs into `%ProgramFiles%\STM8 binutils-gdb` (administrator) or `%LocalAppData%\Programs\STM8 binutils-gdb` (just you), and adds `bin` to `PATH`. Uninstall it in *Settings → Apps*. | You want the usual install. **Recommended for most people.** |
+| `stm8-binutils-gdb-windows-x64.zip` | Plain archive with the folder `stm8-binutils-gdb-windows-x64` (`bin\`, `lib\`, `share\`). | You do not have the rights to install, or you want a portable copy. |
+
+The files are **not signed**, so Windows SmartScreen shows *Windows protected your PC* for the
+installer: click *More info*, then *Run anyway*. For the `.zip`: unpack it where you want, and add
+its `bin` directory to `PATH` (*Settings → System → About → Advanced system settings →
+Environment Variables*, or `setx PATH "%PATH%;C:\tools\stm8-binutils-gdb-windows-x64\bin"`).
+
+Check the result in a **new** terminal window (an open one has the old `PATH`):
+
+```bat
+stm8-gdb --version
+stm8-as --version
+stm8-gdb -batch -ex "python print(1)"
+```
+
+The last command must print `1`. Compare the SHA256 sum of the download with the one in the
+release notes (`certutil -hashfile <file> SHA256`). The binaries were built with
+`contrib/build-windows.sh` (see [Windows package](#windows-package)), not by the maintainers of
+GNU binutils or GDB; if you prefer, build from source.
+
 ### From source
 
 See [Building](#building) below.
@@ -113,6 +144,20 @@ without it the documentation is not built.
   ```bash
   brew install gmp mpfr texinfo python
   ```
+
+- **Windows:** The build needs a POSIX environment, so use [MSYS2](https://www.msys2.org) (the
+  Windows build was done with the *UCRT64* environment). Install MSYS2, open the **MSYS2 UCRT64**
+  shell from the Start menu (not the plain *MSYS2 MSYS* one) and install the packages once:
+  ```bash
+  pacman -Syu          # close the window when it asks, open it again and repeat until it says nothing to do
+  pacman -S --needed base-devel git zip unzip bison flex \
+      mingw-w64-ucrt-x86_64-toolchain mingw-w64-ucrt-x86_64-gmp mingw-w64-ucrt-x86_64-mpfr \
+      mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-expat mingw-w64-ucrt-x86_64-zlib \
+      mingw-w64-ucrt-x86_64-readline mingw-w64-ucrt-x86_64-ntldd
+  ```
+  Use `contrib/build-windows.sh` (see [Windows package](#windows-package) below), which also makes
+  the installer. MSYS2 with these packages takes about 3 GB and the build about 1 GB of disk space; the build
+  takes about 30 minutes (8 cores).
 
 ### Configure
 
@@ -199,6 +244,49 @@ SHA-256 sums) and links them statically, configures with the options above, inst
 staging directory, and copies the Python runtime into `/usr/local/lib/stm8-python`, so
 `stm8-gdb` works with Python without Homebrew or any installed Python. All binaries are signed ad hoc
 (`codesign -s -`); the package is not signed or notarized.
+
+### Windows package
+
+`contrib/build-windows.sh` builds everything from a clean state and makes the `.zip` and the
+setup `.exe` of the prebuilt package (Windows 10 or newer, x64). It is the only thing that
+the Windows build adds; the Linux and macOS builds do not use it (nor `contrib/windows/`).
+
+1. Install [MSYS2](https://www.msys2.org) (`winget install MSYS2.MSYS2`) and its packages, see
+   [Requirements](#requirements).
+2. Optional, for the setup `.exe`: install [Inno Setup 6](https://jrsoftware.org/isinfo.php)
+   (`winget install JRSoftware.InnoSetup`). Without it only the `.zip` is made.
+3. Get the sources **without line-ending conversion**. Git for Windows usually has
+   `core.autocrlf=true`, which turns the files into CRLF and then `configure` stops with
+   `syntax error near unexpected token`. The `.gitattributes` of this repository turns the conversion
+   off, but when you clone, it is safest to say it too:
+   ```bash
+   git -c core.autocrlf=false clone https://gitlab.com/spseol/mit-no/stm8-binutils-gdb.git
+   ```
+4. Open the **MSYS2 UCRT64** shell and run (the work directory must not have spaces in its path):
+   ```bash
+   cd stm8-binutils-gdb
+   contrib/build-windows.sh /c/stm8-build-out      # results in /c/stm8-build-out/out/
+   ```
+   Logs are in `…/logs/` (`configure.log`, `make.log`, `install.log`). Set `PKG_VERSION=15.0.50` to
+   change the version in the installer; `ISCC=<path to ISCC.exe>` if Inno Setup is not found.
+
+What the script does, which you need to know if you build by hand:
+
+* configures with `CFLAGS='-O2 -std=gnu17'`: GCC 15 and newer compile C as C23, and the old C
+  sources in this tree (`bfd`, `readline`) do not compile as C23;
+* uses `--with-system-readline` (the readline in the tree fails with a new GCC) and
+  `--with-python=/ucrt64/bin/python3` (the Python of MSYS2, built with MinGW like GDB; the
+  python.org Python is built with MSVC and was not tried);
+* installs into a staging directory and copies the Python standard library into `lib/python3.14`
+  next to `bin` (Python finds it relative to `stm8-gdb.exe`) and every DLL that `ntldd` reports for
+  the executables and Python extensions into `bin`;
+* checks the result with a clean `PATH` (only `C:\Windows`): `stm8-gdb` must start and
+  `import gdb.dap` must work, so no MSYS2 file is needed on the target machine;
+* makes the `.zip` (`zip`) and the installer (`contrib/windows/stm8-binutils-gdb.iss`), which
+  can install for one user or for all users and edits `PATH` accordingly.
+
+The binaries are not signed. Upload `stm8-binutils-gdb-windows-x64-setup.exe`,
+`stm8-binutils-gdb-windows-x64.zip` and `SHA256SUMS` to the release.
 
 ## Usage
 
