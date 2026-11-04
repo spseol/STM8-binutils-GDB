@@ -34,20 +34,28 @@ sudo apt update
 sudo apt install stm8-binutils-gdb
 ```
 
+The `.deb` file is also attached to the
+[releases](https://gitlab.com/spseol/mit-no/stm8-binutils-gdb/-/releases) (from `v15.0.50-stm8.2`,
+package version `15.0.50~20240111-2` with the fixes of `stm8-as` and `stm8-ld`). Install it with
+`sudo apt install ./stm8-binutils-gdb_*_amd64.deb`. It needs `libpython3.13` (Debian 13 or similar).
+
 ### macOS (Apple Silicon)
 
 A prebuilt package for macOS 12 or newer on Apple Silicon (arm64) is attached to the
-[releases](https://gitlab.com/spseol/mit-no/stm8-binutils-gdb/-/releases). It has GMP and MPFR
-linked statically and depends only on system libraries, so you do **not** need Homebrew
-or the Command Line Tools just to use it. Intel Macs are not supported by the prebuilt package;
-build from source (see [Building](#building)).
+[releases](https://gitlab.com/spseol/mit-no/stm8-binutils-gdb/-/releases) (use
+`v15.0.50-stm8.2` or newer). It has GMP and MPFR linked statically and its own copy of
+Python 3.14 (in `/usr/local/lib/stm8-python`), so `stm8-gdb` has Python and DAP support and
+you do **not** need Homebrew, the Command Line Tools or an installed Python just to use it.
+The bundled Python has no `ssl`, `curses` and `tkinter` modules; GDB and the
+[STM8S toolchain](https://gitlab.com/spseol/mit-no/STM8S-toolchain) do not need them.
+Intel Macs are not supported by the prebuilt package; build from source (see [Building](#building)).
 
 The release has two files with the same content. Pick one:
 
 | File | What it is | Choose it if |
 |------|------------|--------------|
 | `stm8-binutils-gdb-macos-arm64.pkg` | Standard macOS installer. Installs into `/usr/local` (`/usr/local/bin` is already in `PATH`). macOS remembers the files, so you can list or remove them later with `pkgutil`. | You want the usual double-click install. **Recommended for most people.** |
-| `stm8-binutils-gdb-macos-arm64.tar.gz` | Plain archive with a `usr/local/` tree and no installer. | You install from a script, or you want to look at the files before they land on the disk. |
+| `stm8-binutils-gdb-macos-arm64.tar.gz` | Plain archive with a `usr/local/` tree (`bin/`, `share/`, `lib/stm8-python/`, ...) and no installer. | You install from a script, or you want to look at the files before they land on the disk. |
 
 The packages are **not signed or notarized**. For the installer this means that macOS
 Gatekeeper blocks it at first.
@@ -69,23 +77,16 @@ Check the result in a new terminal window:
 ```bash
 stm8-gdb --version
 stm8-as --version
+stm8-gdb -batch -ex 'python print(1)'     # must print 1
 ```
 
-**Known problems of release `v15.0.50-stm8.1`:**
-
-- Its `stm8-ld` was built before the relocation fix (issue #1) and writes wrong addresses
-  (for example `jp _start` is linked as `jp 0x00aa`). If you link with SDCC (`sdld`), as the
-  [STM8S toolchain](https://gitlab.com/spseol/mit-no/STM8S-toolchain) does, `stm8-ld` is not used at all.
-- Its `stm8-gdb` was built **without Python**. The `make debug` of the STM8S toolchain and its
-  VS Code / VSCodium extension need GDB with Python, so for them you have to build from source
-  with Python (see [Building](#building)). Check with
-  `stm8-gdb -batch -ex 'python print(1)'`: it must print `1`.
-
-A newer release replaces this one when it is built on a Mac.
+Do not use the older release `v15.0.50-stm8.1`: its `stm8-ld` writes wrong addresses and its
+`stm8-gdb` has no Python.
 
 Compare the SHA256 sum of the download with the one in the release notes
-(`shasum -a 256 <file>`). The binaries were built by a community member on a Mac,
-not by the maintainers; if you prefer, build from source.
+(`shasum -a 256 <file>`). The binaries were built by a community member on a Mac with
+`contrib/build-macos.sh` (see [macOS package](#macos-package)), not by the maintainers; if you
+prefer, build from source.
 
 ### From source
 
