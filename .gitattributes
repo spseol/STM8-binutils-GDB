@@ -33,3 +33,6 @@ ChangeLog       merge=merge-changelog
 *.[cChH] whitespace=space-before-tab,indent-with-non-tab,trailing-space
 *.exp whitespace=space-before-tab,indent-with-non-tab,trailing-space
 *.tcl whitespace=space-before-tab,indent-with-non-tab,trailing-space
+
+# Windows: never convert line endings (configure scripts must stay LF even with core.autocrlf=true)
+* -text
