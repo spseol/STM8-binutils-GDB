@@ -72,6 +72,19 @@ Archive (`.tar.gz`):
 sudo tar -xzf stm8-binutils-gdb-macos-arm64.tar.gz -C /
 ```
 
+Without administrator rights you can unpack it into your home directory and put the `bin` directory
+into `PATH` (add the second line to `~/.zprofile` to keep it):
+
+```bash
+mkdir -p ~/stm8 && tar -xzf stm8-binutils-gdb-macos-arm64.tar.gz -C ~/stm8
+export PATH="$HOME/stm8/usr/local/bin:$PATH"
+```
+
+The tools find their files (including the bundled Python) relative to their own location, so the
+directory can be anywhere. A program started from the Dock does not see the `PATH` of your shell, so
+start VS Code / VSCodium from a terminal (`code .`) when the [STM8S toolchain](https://gitlab.com/spseol/mit-no/STM8S-toolchain)
+extension has to find `stm8-gdb`.
+
 Check the result in a new terminal window:
 
 ```bash
