@@ -55,17 +55,18 @@ and so does the `.tar.gz`. Pick one:
 
 | File | What it is | Choose it if |
 |------|------------|--------------|
-| `stm8-binutils-gdb-macos-arm64.pkg` | Standard macOS installer. Installs into `/usr/local` (`/usr/local/bin` is already in `PATH`). macOS remembers the files, so you can list or remove them later with `pkgutil`. | You want the usual double-click install. **Recommended for most people.** |
+| `stm8-binutils-gdb-macos-arm64.pkg` | Standard macOS installer, installed with `sudo installer`. Installs into `/usr/local` (`/usr/local/bin` is already in `PATH`). macOS remembers the files, so you can list or remove them later with `pkgutil`. | You want the usual installer. **Recommended for most people.** |
 | `stm8-binutils-gdb-macos-arm64.tar.gz` | Plain archive with a `usr/local/` tree (`bin/`, `share/`, `lib/stm8-python/`, ...) and no installer. | You install from a script, or you want to look at the files before they land on the disk. |
 
 The packages are **not signed or notarized**. For the installer this means that macOS
-Gatekeeper blocks it at first.
+Gatekeeper blocks a double-click install, and right-click → *Open* does not always help.
+The command-line installer is not blocked:
 
 Installer (`.pkg`):
 
-1. Download the file. In Finder, right-click it and choose **Open**, then **Open** again
-   (or allow it in *System Settings → Privacy & Security → Open Anyway*).
-2. Follow the installer and enter your password.
+```bash
+sudo installer -pkg ~/Downloads/stm8-binutils-gdb-macos-arm64.pkg -target /
+```
 
 Archive (`.tar.gz`):
 
