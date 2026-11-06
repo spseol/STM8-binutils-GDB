@@ -50,7 +50,8 @@ The bundled Python has no `ssl`, `curses` and `tkinter` modules; GDB and the
 [STM8S toolchain](https://gitlab.com/spseol/mit-no/STM8S-toolchain) do not need them.
 Intel Macs are not supported by the prebuilt package; build from source (see [Building](#building)).
 
-The release has two files with the same content. Pick one:
+The release has two files with the same content, both tested: the `.pkg` installs and works,
+and so does the `.tar.gz`. Pick one:
 
 | File | What it is | Choose it if |
 |------|------------|--------------|
@@ -97,9 +98,8 @@ Do not use the older release `v15.0.50-stm8.1`: its `stm8-ld` writes wrong addre
 `stm8-gdb` has no Python.
 
 Compare the SHA256 sum of the download with the one in the release notes
-(`shasum -a 256 <file>`). The binaries were built by a community member on a Mac with
-`contrib/build-macos.sh` (see [macOS package](#macos-package)), not by the maintainers; if you
-prefer, build from source.
+(`shasum -a 256 <file>`). The packages are made with `contrib/build-macos.sh` (see
+[macOS package](#macos-package)); you can also build from source.
 
 ### From source
 
